@@ -2,6 +2,35 @@ import numpy as np
 import scipy as sp
 #NO OTHER IMPORTS ALLOWED (However, you're allowed to import e.g. scipy.linalg)
 
+# nominal dynamics - assuming euler integration
+def f(x, u, dt, B=0.8, r=0.425):
+    # B +- 10%
+    # r +- 5%
+    # x = {x, y, theta}
+    # u = {omega, gamma}
+    return np.array([
+        x[0] + 5 * r * u[0] * np.cos(x[2]) * dt,
+        x[1] + 5 * r * u[0] * np.sin(x[2]) * dt,
+        x[2] + 5 * r * u[0] / B * np.tan(u[1]) * dt
+    ])
+
+def linmod(x, u, dt, B=0.8, r=0.425):
+    # jacobian of f -> linmod basically
+    A_mat = np.array([
+        [1, 0, - 5 * r * u[0] * np.sin(x[2]) * dt],
+        [0, 1, 5 * r * u[0] * np.cos(x[2]) * dt],
+        [0, 0, 1]
+    ]),
+    B_mat = np.array([
+        [5 * r * np.cos(x[2]) * dt, 0],
+        [5 * r * np.sin(x[2]) * dt, 0],
+        [5 * r / B * np.tan(u[1]) * dt, 5 * r * u[0] / B * 1/np.cos(u[1])**2 * dt]
+    ])
+    return A_mat, B_mat
+
+
+
+
 def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     # In this function you implement your estimator. The function arguments
     # are:
@@ -27,7 +56,9 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     x = internalStateIn[0]
     y = internalStateIn[1]
     theta = internalStateIn[2]
-    myColor = internalStateIn[3]
+    
+    xm = np.array(internalStateIn[:3])
+    Pm = internalStateIn[3]
 
     x = x + pedalSpeed
     y = y + pedalSpeed

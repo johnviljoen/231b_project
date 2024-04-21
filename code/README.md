@@ -12,4 +12,3 @@ Start date: 4th April
 - Done
 
 # Start after April 15th NOICE
-
