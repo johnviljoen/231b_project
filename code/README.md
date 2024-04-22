@@ -3,7 +3,6 @@ Midterm: 22nd April
 Start date: 4th April
 
 # TODO: 
-- Yutaka gets Yichen's code
 - Build KF
 - Build EKF
 - Build UKF
