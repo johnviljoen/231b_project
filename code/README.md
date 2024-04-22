@@ -3,11 +3,10 @@ Midterm: 22nd April
 Start date: 4th April
 
 # TODO: 
-- Build KF
-- Build EKF
+- Build KF DONE
+- Build EKF DONE
 - Build UKF
-- Build P
+- Build PF
 - Write the analysis on the overleaf
-- Done
 
 # Start after April 15th NOICE
