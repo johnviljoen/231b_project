@@ -9,7 +9,7 @@ from estInitialize import estInitialize
 
 #provide the index of the experimental run you would like to use.
 # Note that using "0" means that you will load the measurement calibration data.
-experimentalRun = 1
+experimentalRun = 2
 
 print('Loading the data file #', experimentalRun)
 experimentalData = np.genfromtxt ('data/run_{0:03d}.csv'.format(experimentalRun), delimiter=',')

@@ -77,8 +77,8 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     Sigma_vv = internalStateIn[4] # {3x3}
     Sigma_ww = internalStateIn[5] # {2x2}
 
-    Sigma_vv = np.eye(3)
-    Sigma_ww = np.eye(2)
+    # Sigma_vv = np.eye(3)
+    # Sigma_ww = np.eye(2)
 
     # Sigma_vv = np.array([[ 0.5287062 ,  0.20239834, -0.01566376],
     #    [ 0.20239834,  0.72856973,  0.08223604],
@@ -98,11 +98,17 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     # Sigma_ww = np.array([[1.42896293, 1.99171226],
     #    [1.99171226, 4.80647754]])
     
-    Sigma_vv = np.array([[ 4.03852023e-01, -4.53941322e-03, -1.78433646e-03],
-       [-4.53941322e-03,  3.96567534e-01,  3.25160704e-04],
-       [-1.78433646e-03,  3.25160704e-04,  3.17160995e-02]])
-    Sigma_ww = np.array([[2.45192888, 2.15958191],
-       [2.15958191, 4.71962838]])
+    # Sigma_vv = np.array([[ 4.03852023e-01, -4.53941322e-03, -1.78433646e-03],
+    #    [-4.53941322e-03,  3.96567534e-01,  3.25160704e-04],
+    #    [-1.78433646e-03,  3.25160704e-04,  3.17160995e-02]])
+    # Sigma_ww = np.array([[2.45192888, 2.15958191],
+    #    [2.15958191, 4.71962838]])
+
+    Sigma_vv = np.array([[ 0.20586454,  0.02667422, -0.00290327],
+       [ 0.02667422,  0.2355549 ,  0.00036677],
+       [-0.00290327,  0.00036677,  0.13376413]])
+    Sigma_ww = np.array([[2.24469592, 2.03553876],
+       [2.03553876, 4.55707782]])
 
     # used for manually gathering statistics through the example runs on the Sigma_vv and Sigma_ww
     cumulative_vv = internalStateIn[6]
@@ -144,8 +150,8 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     x, y, theta = xm.flatten()
     internalStateOut = [x, y, theta, Pm, Sigma_vv, Sigma_ww, cumulative_vv, cumulative_ww, count_vv, count_ww]
 
-    if time == 99.9:
-        print('fin')
+    # if time == 99.9:
+    #     print('fin')
 
     # DO NOT MODIFY THE OUTPUT FORMAT:
     return x, y, theta, internalStateOut 
