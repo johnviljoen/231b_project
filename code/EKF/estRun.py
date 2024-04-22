@@ -77,6 +77,39 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     Sigma_vv = internalStateIn[4] # {3x3}
     Sigma_ww = internalStateIn[5] # {2x2}
 
+    Sigma_vv = np.eye(3)
+    Sigma_ww = np.eye(2)
+
+    # Sigma_vv = np.array([[ 0.5287062 ,  0.20239834, -0.01566376],
+    #    [ 0.20239834,  0.72856973,  0.08223604],
+    #    [-0.01566376,  0.08223604,  0.28171361]])
+    # Sigma_ww = np.array([[5.00751546, 2.59393855],
+    #    [2.59393855, 7.45516744]])
+    
+    # Sigma_vv = np.array([[0.19199799, 0.03592953, 0.00370974],
+    #    [0.03592953, 0.24384159, 0.01312044],
+    #    [0.00370974, 0.01312044, 0.04701103]])
+    # Sigma_ww = np.array([[1.64948702, 2.05031815],
+    #    [2.05031815, 4.57723283]])
+    
+    # Sigma_vv = np.array([[0.05395144, 0.01174522, 0.00102412],
+    #    [0.01174522, 0.07927587, 0.01053843],
+    #    [0.00102412, 0.01053843, 0.0095018 ]])
+    # Sigma_ww = np.array([[1.42896293, 1.99171226],
+    #    [1.99171226, 4.80647754]])
+    
+    Sigma_vv = np.array([[ 4.03852023e-01, -4.53941322e-03, -1.78433646e-03],
+       [-4.53941322e-03,  3.96567534e-01,  3.25160704e-04],
+       [-1.78433646e-03,  3.25160704e-04,  3.17160995e-02]])
+    Sigma_ww = np.array([[2.45192888, 2.15958191],
+       [2.15958191, 4.71962838]])
+
+    # used for manually gathering statistics through the example runs on the Sigma_vv and Sigma_ww
+    cumulative_vv = internalStateIn[6]
+    cumulative_ww = internalStateIn[7] 
+    count_vv = internalStateIn[8]
+    count_ww = internalStateIn[9]
+
     # Update
     A_km1, _, _, L_km1, _ = linmod(xm, um, dt)
     xp = q(xm, um, dt)
@@ -88,20 +121,31 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     if not np.isnan(z).any():
         xm = xp[:, None] + K_k @ (z[:, None] - h(xp))
         residual = z - h(xp).flatten()
+        cumulative_ww += np.outer(residual, residual)
+        count_ww += 1
     else:
         xm = xp[:, None]
         residual = np.zeros_like(z)
     Pm = (np.eye(3) - K_k @ H_k) @ Pp_k @ (np.eye(3) - K_k @ H_k).T + K_k @ Sigma_ww @ K_k.T
 
+    # Update cumulative sums for process noise covariance
+    process_residual = xp[:, None] - q(xm, um, dt)
+    cumulative_vv += np.outer(process_residual, process_residual)
+    count_vv += 1
+
+    # outdated, seems the covariances fairly constant, no need for online adaptation
     # Update covariances based on EWMA
-    alpha_vv = 0.01 # learning rate vv
-    alpha_ww = 0.01 # learning rate ww
-    Sigma_vv = (1 - alpha_vv) * Sigma_vv + alpha_vv * np.outer(xp[:, None] - q(xm, um, dt), xp[:, None] - q(xm, um, dt))
-    Sigma_ww = (1 - alpha_ww) * Sigma_ww + alpha_ww * np.outer(residual, residual)
+    # alpha_vv = 0.01 # learning rate vv
+    # alpha_ww = 0.01 # learning rate ww
+    # Sigma_vv = (1 - alpha_vv) * Sigma_vv + alpha_vv * np.outer(xp[:, None] - q(xm, um, dt), xp[:, None] - q(xm, um, dt))
+    # Sigma_ww = (1 - alpha_ww) * Sigma_ww + alpha_ww * np.outer(residual, residual)
 
     #### OUTPUTS ####
     x, y, theta = xm.flatten()
-    internalStateOut = [x, y, theta, Pm, Sigma_vv, Sigma_ww]
+    internalStateOut = [x, y, theta, Pm, Sigma_vv, Sigma_ww, cumulative_vv, cumulative_ww, count_vv, count_ww]
+
+    if time == 99.9:
+        print('fin')
 
     # DO NOT MODIFY THE OUTPUT FORMAT:
     return x, y, theta, internalStateOut 
