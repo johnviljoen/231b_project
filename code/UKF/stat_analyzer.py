@@ -1,5 +1,5 @@
 
-# This is the main function, which will initilize your estimator, and run it using data loaded from a text file. 
+# This is the main function, which will initilize your estimator, and run it using data loaded from a text file.
 #
 
 import numpy as np
@@ -30,7 +30,7 @@ count_vv = 0
 count_ww = 0
 
 for run in range(runs):
-    for experimentalRun in tqdm(range(100)):
+    for experimentalRun in tqdm(range(1)):
 
         # print('Loading the data file #', experimentalRun)
         experimentalData = np.genfromtxt ('data/run_{0:03d}.csv'.format(experimentalRun), delimiter=',')
