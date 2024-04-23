@@ -55,35 +55,46 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     xm = np.array(internalStateIn[:3]) # {x, y, theta}
     um = np.array([pedalSpeed, steeringAngle]) # {omega, gamma}
     z = np.array(measurement) # {x, y}
-    Pm = internalStateIn[3] # {3x3}
-    Sigma_vv = internalStateIn[4] # {3x3}
-    Sigma_ww = internalStateIn[5] # {2x2}
+    Pm = internalStateIn[3]
 
-    # Update
-    A_km1, _, _, L_km1, _ = linmod(xm, um, dt)
-    xp = q(xm, um, dt)
-    Pp_k = A_km1 @ Pm @ A_km1.T + L_km1 @ Sigma_vv @ L_km1.T
+    # covariances found from statistical analysis during EKF work - hardcoded here
+    Sigma_vv = np.array([
+        [ 0.20586454,  0.02667422, -0.00290327],
+        [ 0.02667422,  0.2355549 ,  0.00036677],
+        [-0.00290327,  0.00036677,  0.13376413]
+    ])
+    Sigma_ww = np.array([
+        [2.24469592, 2.03553876],
+        [2.03553876, 4.55707782]
+    ])
 
-    # Measurement
-    _, _, H_k, _, M_k = linmod(xp, um, dt)
-    K_k = Pp_k @ H_k.T @  np.linalg.inv(H_k @ Pp_k @ H_k.T + M_k @ Sigma_ww @ M_k.T)
+    # Prior update
+    sm = get_sig(xm, Pm) # get 2n sigma points
+    sp = q(sm, um, dt) # transform for prior sigma points
+
+    # compute prior statistics
+    xp_hat_k = np.mean(sp, axis=1, keepdims=True)
+    Pp_k = (sp - xp_hat_k) @ (sp - xp_hat_k).T / sp.shape[1] + Sigma_vv
+
+    # Posteriori update
+    sz_k = h(sp)[:,0,:] # compute sigma points for the measurements
+    z_hat_k = np.mean(sz_k, axis=1, keepdims=True) # expected measurement
+    Pzz_k = (sz_k - z_hat_k) @ (sz_k - z_hat_k).T / sz_k.shape[1] + Sigma_ww # associated covariance
+
+    # cross covariance
+    Pxz_k = (sp - xp_hat_k) @ (sz_k - z_hat_k).T / sz_k.shape[1]
+
+    # apply the kalman filter gain
+    K_k = Pxz_k @ np.linalg.inv(Pzz_k)
     if not np.isnan(z).any():
-        xm = xp[:, None] + K_k @ (z[:, None] - h(xp))
-        residual = z - h(xp).flatten()
+        xm_k = xp_hat_k + K_k @ (z[:, None] - z_hat_k)
     else:
-        xm = xp[:, None]
-        residual = np.zeros_like(z)
-    Pm = (np.eye(3) - K_k @ H_k) @ Pp_k @ (np.eye(3) - K_k @ H_k).T + K_k @ Sigma_ww @ K_k.T
-
-    # Update covariances based on EWMA
-    alpha_vv = 0.01 # learning rate vv
-    alpha_ww = 0.01 # learning rate ww
-    Sigma_vv = (1 - alpha_vv) * Sigma_vv + alpha_vv * np.outer(xp[:, None] - q(xm, um, dt), xp[:, None] - q(xm, um, dt))
-    Sigma_ww = (1 - alpha_ww) * Sigma_ww + alpha_ww * np.outer(residual, residual)
+        xm_k = xp_hat_k
+    Pm_k = Pp_k - K_k @ Pzz_k @ K_k.T
 
     #### OUTPUTS ####
-    x, y, theta = xm.flatten()
-    internalStateOut = [x, y, theta, Pm, Sigma_vv, Sigma_ww]
+    x, y, theta = xm_k.flatten()
+    internalStateOut = [x, y, theta, Pm_k]
 
     # DO NOT MODIFY THE OUTPUT FORMAT:
     return x, y, theta, internalStateOut 

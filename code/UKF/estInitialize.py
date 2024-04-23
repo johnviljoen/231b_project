@@ -18,8 +18,7 @@ def estInitialize():
     y = 0
     theta = np.pi/4
     Pm = np.diag([1, 1, 1]) # identity for now
-    Sigma_vv = np.eye(3)
-    Sigma_ww = np.eye(2)
+    # Pm = np.diag([10, 10, 0.5])
 
     # note that there is *absolutely no prescribed format* for this internal state.
     # You can put in it whatever you like. Probably, you'll want to keep the position
@@ -28,9 +27,7 @@ def estInitialize():
         x,
         y,
         theta, 
-        Pm,
-        Sigma_vv,
-        Sigma_ww
+        Pm
     ]
 
     # replace these names with yours. Delete the second name if you are working alone.
