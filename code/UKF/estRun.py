@@ -68,6 +68,9 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
         [2.03553876, 4.55707782]
     ])
 
+    # Sigma_vv = np.diag([0.2, 0.2, 0.1])
+    # Sigma_ww = np.array([2])
+
     # Prior update
     sm = get_sig(xm, Pm) # get 2n sigma points
     sp = q(sm, um, dt) # transform for prior sigma points
@@ -77,6 +80,8 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     Pp_k = (sp - xp_hat_k) @ (sp - xp_hat_k).T / sp.shape[1] + Sigma_vv
 
     # Posteriori update
+    sp = q(get_sig(xp_hat_k.flatten(), Pp_k), um, dt) # recompute 2n sigma points and transform
+
     sz_k = h(sp)[:,0,:] # compute sigma points for the measurements
     z_hat_k = np.mean(sz_k, axis=1, keepdims=True) # expected measurement
     Pzz_k = (sz_k - z_hat_k) @ (sz_k - z_hat_k).T / sz_k.shape[1] + Sigma_ww # associated covariance
@@ -91,6 +96,8 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     else:
         xm_k = xp_hat_k
     Pm_k = Pp_k - K_k @ Pzz_k @ K_k.T
+
+    print(time)
 
     #### OUTPUTS ####
     x, y, theta = xm_k.flatten()
