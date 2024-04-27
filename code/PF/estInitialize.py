@@ -12,22 +12,30 @@ def estInitialize():
     # 
     # The third return variable must be a string with the estimator type
 
-    #we make the internal state a list, with the first three elements the position
-    # x, y; the angle theta; and our favorite color.
-    x = 0
-    y = 0
-    theta = np.pi/4
-    Pm = np.diag([1, 1, 1]) # identity for now
+    # Number of particles
+    N = 10000
 
+    # randomize B, r using uniform distribution
+    B = np.random.uniform(low = 0.8 * (1 - 0.1), high = 0.8 * (1 + 0.1), size = [N,1])
+    r = np.random.uniform(low = 0.425 * (1 - 0.05), high = 0.425 * (1 + 0.05), size = [N,1])
+
+    # randomize initial value of x1, y1, theta using normal distribution
+    x1 = np.random.normal(loc = 0, scale = np.sqrt(2), size = [N,1])
+    y1 = np.random.normal(loc = 0, scale = np.sqrt(8), size = [N,1])
+    theta = np.random.normal(loc = np.pi/4, scale = np.sqrt(0.07), size = [N,1])
+
+    color = 'green' 
     # note that there is *absolutely no prescribed format* for this internal state.
     # You can put in it whatever you like. Probably, you'll want to keep the position
     # and angle, and probably you'll remove the color.
-    internalState = [
-        x,
-        y,
-        theta, 
-        Pm
-    ]
+    internalState = [x1,
+                     y1,
+                     theta, 
+                     color,
+                     N,
+                     B,
+                     r
+                     ]
 
     # replace these names with yours. Delete the second name if you are working alone.
     studentNames = ['John Viljoen',

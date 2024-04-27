@@ -51,52 +51,95 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     #  theta: your current best estimate for the bicycle's rotation theta
     #  internalState: the estimator's internal state, in a format that can be understood by the next call to this function
 
-    # unpack internal state
-    xm = np.array(internalStateIn[:3]) # {x, y, theta}
-    um = np.array([pedalSpeed, steeringAngle]) # {omega, gamma}
-    z = np.array(measurement) # {x, y}
-    Pm = internalStateIn[3]
+    # get the last time step state x1, y1, theta
+    x1 = internalStateIn[0]
+    y1 = internalStateIn[1]
+    theta = internalStateIn[2]
 
-    # covariances found from statistical analysis during EKF work - hardcoded here
-    Sigma_vv = np.array([
-        [ 0.20586454,  0.02667422, -0.00290327],
-        [ 0.02667422,  0.2355549 ,  0.00036677],
-        [-0.00290327,  0.00036677,  0.13376413]
-    ])
-    Sigma_ww = np.array([
-        [2.24469592, 2.03553876],
-        [2.03553876, 4.55707782]
-    ])
+    myColor = internalStateIn[3]
 
-    # Prior update
-    sm = get_sig(xm, Pm) # get 2n sigma points
-    sp = q(sm, um, dt) # transform for prior sigma points
+    # get the particle number
+    N = internalStateIn[4]
 
-    # compute prior statistics
-    xp_hat_k = np.mean(sp, axis=1, keepdims=True)
-    Pp_k = (sp - xp_hat_k) @ (sp - xp_hat_k).T / sp.shape[1] + Sigma_vv
+    # get B and r
+    B = internalStateIn[5]
+    r = internalStateIn[6]
 
-    # Posteriori update
-    sz_k = h(sp)[:,0,:] # compute sigma points for the measurements
-    z_hat_k = np.mean(sz_k, axis=1, keepdims=True) # expected measurement
-    Pzz_k = (sz_k - z_hat_k) @ (sz_k - z_hat_k).T / sz_k.shape[1] + Sigma_ww # associated covariance
+    # get the measurements of x and y
+    x_meas = measurement[0]
+    y_meas = measurement[1]
 
-    # cross covariance
-    Pxz_k = (sp - xp_hat_k) @ (sz_k - z_hat_k).T / sz_k.shape[1]
+    # calculate the linear velocity
+    v = 5 * r * pedalSpeed
 
-    # apply the kalman filter gain
-    K_k = Pxz_k @ np.linalg.inv(Pzz_k)
-    if not np.isnan(z).any():
-        xm_k = xp_hat_k + K_k @ (z[:, None] - z_hat_k)
+    # prior update of x1, y1, theta
+    x1p = x1 + v * np.cos(theta) * dt + np.random.normal(loc = 0, scale = np.sqrt(0.001), size = [N,1])
+    y1p = y1 + v * np.sin(theta) * dt + np.random.normal(loc = 0, scale =np.sqrt(0.003), size = [N,1])
+    thetap = theta + v / B * np.tan(steeringAngle) * dt + np.random.normal(loc = 0, scale = np.sqrt(0.001), size = [N,1])
+
+    # get the priors  of bicycle position x, y from x1, y2
+    xp = x1p + 0.5 * B * np.cos(thetap)
+    yp = y1p + 0.5 * B * np.sin(thetap)
+
+    if not (np.isnan(measurement[0]) and np.isnan(measurement[1])):
+        # if we have a valid measurement
+        
+        xy = np.concatenate([xp, yp], axis=1)
+
+        if np.isnan(measurement[0]):
+            # in case only the measurement of y is valid
+            beta = sp.stats.norm.pdf(xy[:, 1], loc=y_meas, scale=np.sqrt(2.98))
+        elif np.isnan(measurement[1]):
+            # in case only the measurement of x is valid
+            beta = sp.stats.norm.pdf(xy[:, 0], loc=x_meas, scale=np.sqrt(1.09))
+        else:
+            # both measurements of x, y are valid
+            beta = sp.stats.multivariate_normal.pdf(
+                xy, mean = [x_meas,y_meas],
+                cov = np.array([[1.08933973, 1.53329122],[1.53329122, 2.98795486]])
+            )
+
+        # Particles with too low probability may have NaN probability values
+        beta = np.where(np.isnan(beta), np.zeros_like(beta), beta)
+        beta = beta / np.sum(beta)
+        particle_id = np.random.choice(N, size=N, replace=True, p=beta)
+        x1m = x1p[particle_id]
+        y1m = y1p[particle_id]
+        thetam = thetap[particle_id]
+        xm = xp[particle_id]
+        ym = yp[particle_id]
     else:
-        xm_k = xp_hat_k
-    Pm_k = Pp_k - K_k @ Pzz_k @ K_k.T
+        # If there are no valid measurements,we just use the prior estimate
+        x1m = x1p
+        y1m = y1p
+        thetam = thetap
+        xm = xp
+        ym = yp
+
+    # #we're unreliable about our favourite colour: 
+    # if myColor == 'green':
+    #     myColor = 'red'
+    # else:
+    #     myColor = 'green'
+
 
     #### OUTPUTS ####
-    x, y, theta = xm_k.flatten()
-    internalStateOut = [x, y, theta, Pm_k]
+    # Update the internal state (will be passed as an argument to the function
+    # at next run), must obviously be compatible with the format of
+    # internalStateIn:
+    internalStateOut = [x1m,
+                     y1m,
+                     thetam,
+                     myColor,
+                     N,
+                     B,
+                     r
+                     ]
+    xm = np.mean(xm)
+    ym = np.mean(ym)
+    thetam = np.mean(thetam)
 
     # DO NOT MODIFY THE OUTPUT FORMAT:
-    return x, y, theta, internalStateOut 
+    return xm, ym, thetam, internalStateOut 
 
 
