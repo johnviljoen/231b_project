@@ -75,16 +75,6 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     z = np.array(measurement) # {x, y}
     Pm = internalStateIn[3] # {3x3}
 
-    # Sigma_vv = np.array([
-    #     [ 0.20586454,  0.02667422, -0.00290327],
-    #     [ 0.02667422,  0.2355549 ,  0.00036677],
-    #     [-0.00290327,  0.00036677,  0.13376413]
-    # ])
-    # Sigma_ww = np.array([
-    #     [2.24469592, 2.03553876],
-    #     [2.03553876, 4.55707782]
-    # ])
-
     B = 0.8
     Sigma_vv = np.zeros((3, 3))
     Sigma_vv[0,0] = 25 * um[0] * um[0] * dt * dt * np.cos(xm[2]) * np.cos(xm[2]) * 0.0002 + 0.01
@@ -105,8 +95,6 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     mean_ww = np.array([[0.0028458850141975336],
                         [0.041453958735999615]])
     
-    # mean_ww = np.zeros([2,1])
-
     # Update
     A_km1, _, _, L_km1, _ = linmod(xm, um, dt)
     xp = q(xm, um, dt)

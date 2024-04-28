@@ -18,13 +18,6 @@ def estInitialize():
     y = 0
     theta = np.pi/4
     Pm = np.diag([1, 1, 1]) # identity for now
-    Sigma_vv = np.eye(3)
-    Sigma_ww = np.eye(2)
-    
-    # cumulative_vv = np.zeros_like(Sigma_vv)
-    # cumulative_ww = np.zeros_like(Sigma_ww)
-    # count_vv = 0
-    # count_ww = 0
 
     # note that there is *absolutely no prescribed format* for this internal state.
     # You can put in it whatever you like. Probably, you'll want to keep the position
@@ -33,13 +26,7 @@ def estInitialize():
         x,
         y,
         theta, 
-        Pm,
-        Sigma_vv,
-        Sigma_ww,
-        # cumulative_vv,
-        # cumulative_ww,
-        # count_vv,
-        # count_ww
+        Pm
     ]
 
     # replace these names with yours. Delete the second name if you are working alone.
