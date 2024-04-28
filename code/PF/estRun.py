@@ -116,13 +116,6 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
         xm = xp
         ym = yp
 
-    # #we're unreliable about our favourite colour: 
-    # if myColor == 'green':
-    #     myColor = 'red'
-    # else:
-    #     myColor = 'green'
-
-
     #### OUTPUTS ####
     # Update the internal state (will be passed as an argument to the function
     # at next run), must obviously be compatible with the format of
